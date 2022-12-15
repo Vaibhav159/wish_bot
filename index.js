@@ -1,8 +1,17 @@
+import { Client } from "@notionhq/client";
+import { App } from "@slack/bolt";
 import * as R from "ramda";
 import { isToday, parseISO } from "date-fns";
 
+import constants from "./constants";
+import messages from "./messages.json";
+
 const notion = new Client({
   auth: constants.NOTION_TOKEN,
+});
+const slack = new App({
+  signingSecret: constants.SLACK_SIGNING_SECRET,
+  token: constants.SLACK_BOT_TOKEN,
 });
 
 async function getBirthdayUsers() {
@@ -35,21 +44,6 @@ async function getSlackUsers() {
   }, filteredSlackUsers);
 }
 
-
-import messages from "./messages.json";
-
-function getMessage(userId) {
-  const text = messages[Math.floor(Math.random() * messages.length)].text;
-  return R.replace("<@MENTION>", `<@${userId}>`, text);
-}
-
-import { App } from "@slack/bolt";
-
-const slack = new App({
-  signingSecret: constants.SLACK_SIGNING_SECRET,
-  token: constants.SLACK_BOT_TOKEN,
-});
-
 async function postMessage(text) {
   return await slack.client.chat.postMessage({
     text,
@@ -57,6 +51,10 @@ async function postMessage(text) {
   });
 }
 
+function getMessage(userId) {
+  const text = messages[Math.floor(Math.random() * messages.length)].text;
+  return R.replace("<@MENTION>", `<@${userId}>`, text);
+}
 
 async function main() {
   const birthdayUsers = await getBirthdayUsers();
